@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Codemirror from "codemirror";
 import "codemirror/lib/codemirror.css";
 import "codemirror/theme/dracula.css";
@@ -15,7 +15,7 @@ const Editor = ({ socketRef, roomId, onCodeChange }) => {
       editorRef.current = Codemirror.fromTextArea(
         document.getElementById("realtimeEditor"),
         {
-          mode: { name: "javascript", json: true },
+          mode: "text/x-csrc",
           theme: "dracula",
           autoCloseTags: true,
           autoCloseBrackets: true,
@@ -25,7 +25,7 @@ const Editor = ({ socketRef, roomId, onCodeChange }) => {
 
       editorRef.current.on("change", (instance, changes) => {
         const { origin } = changes;
-        const code = instance.getValue();
+        let code = instance.getValue();
         onCodeChange(code);
         if (origin !== "setValue") {
           socketRef.current.emit(ACTIONS.CODE_CHANGE, {
@@ -34,7 +34,7 @@ const Editor = ({ socketRef, roomId, onCodeChange }) => {
           });
         }
 
-        console.log(code);
+        // console.log(code);
       });
     }
 

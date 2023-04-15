@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Client from "../components/Client";
 import Editor from "../components/Editor";
+import InputModal from "../components/InputModal";
 import { initSocket } from "../socket";
 import ACTIONS from "../Actions";
 import {
@@ -10,6 +11,8 @@ import {
   useParams,
 } from "react-router-dom";
 import toast from "react-hot-toast";
+import axios from "axios";
+import qs from "qs";
 
 const EditorPage = () => {
   const socketRef = useRef(null);
@@ -18,7 +21,17 @@ const EditorPage = () => {
   const reactNavigator = useNavigate();
   const { roomId } = useParams();
 
+  const [runCode, setRunCode] = useState(false);
+  const [codeRes, setCodeRes] = useState(null);
+  const [codeErr, setCodeErr] = useState(null);
   const [clients, setClients] = useState([]);
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [inputDataGet, setInputDataGet] = useState("");
+
+  const inputValFunc = (inputVal) => {
+    setInputDataGet(inputVal);
+  };
 
   useEffect(() => {
     const init = async () => {
@@ -63,12 +76,54 @@ const EditorPage = () => {
     };
 
     init();
+
     return () => {
       socketRef.current.disconnect();
       socketRef.current.off(ACTIONS.JOINED);
       socketRef.current.off(ACTIONS.DISCONNECTED);
     };
   }, []);
+
+  useEffect(() => {
+    const data = qs.stringify({
+      code: codeRef.current,
+      language: "c",
+      input: inputDataGet,
+      // input: "7 8", // multiple input is given like this
+    });
+    const config = {
+      method: "post",
+      url: "https://api.codex.jaagrav.in",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      data: data,
+    };
+
+    axios(config)
+      .then(function (response) {
+        // console.log(JSON.stringify(response.data));
+        console.log(response);
+
+        if (response.data.error) {
+          console.log(response.data.error.split("error: ")[1]);
+          // toast.error(response.data.error.split("error: ")[1]);
+          setCodeErr(response.data.error.split("error: ")[1]);
+        }
+
+        if (response.data.output) {
+          console.log(response.data.output);
+          // toast.success(response.data.output);
+          setCodeRes(response.data.output);
+        }
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+    setCodeErr(null);
+    setCodeRes(null);
+    setRunCode(false);
+  }, [runCode]);
 
   const copyRoomId = async () => {
     try {
@@ -102,6 +157,12 @@ const EditorPage = () => {
             ))}
           </div>
         </div>
+        <button
+          className="btn runBtn runBtnLow"
+          onClick={() => setModalOpen(true)}
+        >
+          Run Code
+        </button>
         <button className="btn copyBtn" onClick={copyRoomId}>
           Copy ROOM ID
         </button>
@@ -118,6 +179,14 @@ const EditorPage = () => {
           }}
         />
       </div>
+      <InputModal
+        modalOpen={modalOpen}
+        setModalOpen={setModalOpen}
+        setRunCode={setRunCode}
+        inputValFunc={inputValFunc}
+        codeRes={codeRes}
+        codeErr={codeErr}
+      />
     </div>
   );
 };
