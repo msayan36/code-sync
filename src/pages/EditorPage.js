@@ -87,7 +87,7 @@ const EditorPage = () => {
   useEffect(() => {
     const data = qs.stringify({
       code: codeRef.current,
-      language: "c",
+      language: "js",
       input: inputDataGet,
       // input: "7 8", // multiple input is given like this
     });
@@ -106,9 +106,9 @@ const EditorPage = () => {
         console.log(response);
 
         if (response.data.error) {
-          console.log(response.data.error.split("error: ")[1]);
+          console.log(response.data.error);
           // toast.error(response.data.error.split("error: ")[1]);
-          setCodeErr(response.data.error.split("error: ")[1]);
+          setCodeErr(response.data.error);
         }
 
         if (response.data.output) {
